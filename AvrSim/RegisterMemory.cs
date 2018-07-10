@@ -1,4 +1,6 @@
-﻿namespace AvrSim
+﻿using System;
+
+namespace AvrSim
 {
 	public class RegisterMemory : IMemory
 	{
@@ -13,12 +15,13 @@
 
 		public byte Load(ushort address)
 		{
-			return core.Registers[address];
+			return core.RegisterFile[address];
 		}
 
 		public void Store(ushort address, byte value)
 		{
-			core.Registers[address] = value;
+			throw new NotImplementedException();
+			//core.Registers[address] = value;
 		}
 	}
 }

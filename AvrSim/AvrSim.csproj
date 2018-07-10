@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -13,7 +13,6 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -51,7 +50,6 @@
     <Compile Include="InstructionHandlerAttribute.cs" />
     <Compile Include="IntegerExtensions.cs" />
     <Compile Include="InvalidInstructionException.cs" />
-    <Compile Include="Memory.cs" />
     <Compile Include="Opcode.cs" />
     <Compile Include="OpcodeDecoder.cs" />
     <Compile Include="Program.cs" />
@@ -59,9 +57,28 @@
     <Compile Include="RegisterMemory.cs" />
     <Compile Include="StackUnderflowException.cs" />
     <Compile Include="StatusRegister.cs" />
+    <Compile Include="Instructions\Arithmetic.cs" />
+    <Compile Include="Instructions\Memory.cs" />
+    <Compile Include="Instructions\Stack.cs" />
+    <Compile Include="Instructions\ProgramFlow.cs" />
+    <Compile Include="Instructions\Test.cs" />
+    <Compile Include="Instructions\Flash.cs" />
+    <Compile Include="Instructions\Register.cs" />
+    <Compile Include="Instructions\Misc.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="RegisterFile.cs" />
+    <Compile Include="Stack.cs" />
+    <Compile Include="MemoryBus.cs" />
+    <Compile Include="Ram.cs" />
+    <Compile Include="MemoryMap.cs" />
+    <Compile Include="IMemory.cs" />
+    <Compile Include="InvalidMemoryAddressException.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Instructions\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

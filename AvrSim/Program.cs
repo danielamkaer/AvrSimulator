@@ -15,23 +15,35 @@ namespace AvrSim
 
 			public byte Load(ushort address)
 			{
-				throw new NotImplementedException();
+				return 0;
 			}
 
 			public void Store(ushort address, byte value)
 			{
-				throw new NotImplementedException();
+				if (address == 0)
+				{
+					Console.Write((char)value);
+				}
 			}
 		}
 
 		static void Main(string[] args)
 		{
+			//Console.SetError(new StreamWriter(new MemoryStream()));
 			var program = File.ReadAllBytes(args[0]);
 
 			var core = new Core(new Flash(program), new Ram(2048));
+
 			core.MemoryBus.AddMap(0x20, 64, new PeripheralMemory());
 
-			core.Run();
+			try
+			{
+				core.Run();
+			}
+			catch (StackUnderflowException)
+			{
+				Console.WriteLine($"Program returned from main.");
+			}
 		}
 	}
 }

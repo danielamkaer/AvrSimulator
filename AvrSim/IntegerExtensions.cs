@@ -39,5 +39,21 @@ namespace AvrSim
 
 			return (short)unsigned;
 		}
+
+		public static sbyte ToSigned(this byte unsigned, int bitSize)
+		{
+			var signBit = bitSize - 1;
+
+			if ((unsigned & (1 << signBit)) != 0)
+			{
+				// number is negative
+				var extended = byte.MaxValue & unsigned;
+				var twosComplement = (sbyte)-((~extended + 1) & (byte.MaxValue >> (8 - bitSize)));
+
+				return twosComplement;
+			}
+
+			return (sbyte)unsigned;
+		}
 	}
 }
