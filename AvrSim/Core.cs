@@ -135,7 +135,7 @@ namespace AvrSim
 			}
 		}
 
-		object MapParameter(ParameterInfo parameterInfo, Instruction instruction, RegisterFile registerFile, string[] arguments)
+		object MapParameter(ParameterInfo parameterInfo, Instruction instruction, RegisterFile registerFile, object[] arguments)
 		{
 			if (parameterInfo.ParameterType == typeof(Instruction))
 			{
@@ -162,7 +162,7 @@ namespace AvrSim
 				return Stack;
 			}
 
-			if (parameterInfo.ParameterType == typeof(string[]))
+			if (parameterInfo.ParameterType == typeof(object[]))
 			{
 				return arguments;
 			}

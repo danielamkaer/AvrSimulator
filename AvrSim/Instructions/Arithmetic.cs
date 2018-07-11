@@ -4,24 +4,16 @@ namespace AvrSim.Instructions
 	public static class Arithmetic
 	{
 		#region Add
-		[InstructionHandler("0001_11rd_dddd_rrrr")]
-		public static RegisterFile Adc(RegisterFile registerFile, byte d, byte r)
+		[InstructionHandler("0000_11rd_dddd_rrrr", false, Name = "Add")]
+		[InstructionHandler("0001_11rd_dddd_rrrr", true, Name = "Adc")]
+		public static RegisterFile Add(RegisterFile registerFile, byte d, byte r, object[] arguments)
 		{
-			return Add(registerFile, d, r, true);
-		}
+			var carry = (bool)arguments[0];
 
-		[InstructionHandler("0000_11rd_dddd_rrrr")]
-		public static RegisterFile Add(RegisterFile registerFile, byte d, byte r)
-		{
-			return Add(registerFile, d, r, false);
-		}
-
-		static RegisterFile Add(RegisterFile registerFile, byte d, byte r, bool withCarry)
-		{
 			var Rd = registerFile[d];
 			var Rr = registerFile[r];
 
-			var R = (byte)(Rd + Rr + (byte)((withCarry && registerFile.StatusRegister.C) ? 1 : 0));
+			var R = (byte)(Rd + Rr + (byte)((carry && registerFile.StatusRegister.C) ? 1 : 0));
 
 			var statusRegister = registerFile.StatusRegister
 											 .WithHalfCarry((Rd.BitIsSet(3) & Rr.BitIsSet(3)) | (Rr.BitIsSet(3) & R.BitIsCleared(3)) | (R.BitIsCleared(3) & Rd.BitIsSet(3)))
@@ -34,7 +26,7 @@ namespace AvrSim.Instructions
 			return registerFile.WithRegister(d, R).WithStatusRegister(statusRegister);
 		}
 
-		[InstructionHandler("1001_0110_KKdd_KKKK")]
+		[InstructionHandler("1001_0110_KKdd_KKKK", Name = "Adiw")]
 		public static RegisterFile Adiw(RegisterFile registerFile, byte K, byte d)
 		{
 			d = (byte)(24 + 2 * d);
@@ -56,34 +48,26 @@ namespace AvrSim.Instructions
 		#endregion
 
 		#region Subtract
-		[InstructionHandler("0101_KKKK_dddd_KKKK")]
-		public static RegisterFile Subi(RegisterFile registerFile, byte K, byte d)
+		[InstructionHandler("0101_KKKK_dddd_KKKK", false, Name = "Subi")]
+		[InstructionHandler("0100_KKKK_dddd_KKKK", true, Name = "Sbci")]
+		public static RegisterFile Subi(RegisterFile registerFile, byte K, byte d, object[] arguments)
 		{
-			return Subi(registerFile, K, d, false);
-		}
+			var carry = (bool)arguments[0];
 
-		static RegisterFile Subi(RegisterFile registerFile, byte K, byte d, bool withCarry)
-		{
 			d = (byte)(d + 16);
 
 			var Rd = registerFile[d];
-			var R = (byte)(Rd - K - (withCarry && registerFile.StatusRegister.C ? 1 : 0));
+			var R = (byte)(Rd - K - (carry && registerFile.StatusRegister.C ? 1 : 0));
 
 			var statusRegister = registerFile.StatusRegister
 											 .WithHalfCarry((Rd.BitIsCleared(3) & K.BitIsSet(3)) | (K.BitIsSet(3) & R.BitIsSet(3)) | (R.BitIsSet(3) & Rd.BitIsCleared(3)))
 											 .WithTwosComplementOverflow((Rd.BitIsSet(7) & K.BitIsCleared(7) & R.BitIsCleared(7)) | (Rd.BitIsCleared(7) & K.BitIsSet(7) & R.BitIsSet(7)))
 											 .WithNegative(R.BitIsSet(7))
-											 .WithZero(R == 0 & (registerFile.StatusRegister.Z | !withCarry))
+											 .WithZero(R == 0 & (registerFile.StatusRegister.Z | !carry))
 											 .WithCarry((Rd.BitIsCleared(7) & K.BitIsSet(7)) | (K.BitIsSet(7) & R.BitIsSet(7)) | (R.BitIsSet(7) & Rd.BitIsCleared(7)));
 			statusRegister = statusRegister.WithSigned(statusRegister.N ^ statusRegister.V);
 
 			return registerFile.WithRegister(d, R).WithStatusRegister(statusRegister);
-		}
-
-		[InstructionHandler("0100_KKKK_dddd_KKKK")]
-		public static RegisterFile Sbci(RegisterFile registerFile, byte K, byte d)
-		{
-			return Subi(registerFile, K, d, true);
 		}
 		#endregion
 	}
