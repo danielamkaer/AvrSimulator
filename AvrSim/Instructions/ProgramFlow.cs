@@ -30,11 +30,11 @@ namespace AvrSim.Instructions
 		}
 
 		[InstructionHandler("1111_01kk_kkkk_k001")]
-		public static RegisterFile Brne(RegisterFile registerFile, byte k)
+		public static RegisterFile Brne(RegisterFile registerFile, sbyte k)
 		{
 			if (!registerFile.StatusRegister.Z)
 			{
-				return registerFile.WithProgramCounter(p => (uint)(p + k.ToSigned(7)));
+				return registerFile.WithProgramCounter(p => (uint)(p + k));
 			}
 
 			return registerFile;

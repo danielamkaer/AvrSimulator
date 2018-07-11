@@ -6,6 +6,59 @@ using System.Threading.Tasks;
 
 namespace AvrSim
 {
+	public class InstructionValue
+	{
+		uint storage;
+		byte numberOfBits;
+
+		public InstructionValue()
+		{
+			storage = 0;
+			numberOfBits = 0;
+		}
+
+		public void InsertLeastSignificantBit(bool bit)
+		{
+			numberOfBits++;
+			storage = ((storage << 1) | (uint)(bit ? 1 : 0));
+		}
+
+		public int ToSigned()
+		{
+			return storage.ToSigned(numberOfBits);
+		}
+
+		public static implicit operator uint(InstructionValue instructionValue)
+		{
+			return instructionValue.storage;
+		}
+
+		public static explicit operator int(InstructionValue instructionValue)
+		{
+			return instructionValue.ToSigned();
+		}
+
+		public static explicit operator short(InstructionValue instructionValue)
+		{
+			return (short)instructionValue.ToSigned();
+		}
+
+		public static explicit operator sbyte(InstructionValue instructionValue)
+		{
+			return (sbyte)instructionValue.ToSigned();
+		}
+
+		public static explicit operator ushort(InstructionValue instructionValue)
+		{
+			return (ushort) instructionValue.storage;
+		}
+
+		public static explicit operator byte(InstructionValue instructionValue)
+		{
+			return (byte)instructionValue.storage;
+		}
+	}
+
 	public class OpcodeDecoder
 	{
 		public List<Decoder> Decoders { get; }
@@ -29,11 +82,11 @@ namespace AvrSim
 			return (word & (1 << bit)) != 0;
 		}
 
-		bool TryMatch(string pattern, uint instruction, int instructionWidth, out Dictionary<char, uint> values)
+		bool TryMatch(string pattern, uint instruction, int instructionWidth, out Dictionary<char, InstructionValue> values)
 		{
 			var position = instructionWidth - 1;
 
-			values = new Dictionary<char, uint>();
+			values = new Dictionary<char, InstructionValue>();
 
 			foreach (var chr in pattern)
 			{
@@ -61,10 +114,10 @@ namespace AvrSim
 
 						if (!values.ContainsKey(c))
 						{
-							values[c] = 0;
+							values[c] = new InstructionValue();
 						}
 
-						values[c] = ((values[c] << 1) | (uint)(bitValue ? 1 : 0));
+						values[c].InsertLeastSignificantBit(bitValue);
 						break;
 					default:
 						throw new Exception($"Unknown character in pattern {chr}");
@@ -83,6 +136,7 @@ namespace AvrSim
 					return new Instruction
 					{
 						Opcode = decoder.Opcode,
+						Bytes = BitConverter.GetBytes(instructionWord).Reverse().ToArray(),
 						Values = values
 					};
 				}
@@ -115,6 +169,7 @@ namespace AvrSim
 					return new Instruction
 					{
 						Opcode = decoder.Opcode,
+						Bytes = BitConverter.GetBytes(wideInstruction).Reverse().ToArray(),
 						Values = values
 					};
 				}

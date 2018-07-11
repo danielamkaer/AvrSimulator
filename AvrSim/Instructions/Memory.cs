@@ -3,166 +3,108 @@ namespace AvrSim.Instructions
 {
 	public static class Memory
 	{
-		[InstructionHandler("10q0_qq0d_dddd_0qqq")]
-		public static RegisterFile Ldd_Z(RegisterFile registerFile, byte d, byte q, MemoryBus memoryBus)
+		[InstructionHandler("10q0_qq0d_dddd_0qqq", "Z")]
+		[InstructionHandler("10q0_qq0d_dddd_1qqq", "Y")]
+		public static RegisterFile Ldd(RegisterFile registerFile, byte d, byte q, MemoryBus memoryBus, string[] arguments)
 		{
-			return registerFile.WithRegister(d, memoryBus.Load((ushort)(registerFile.GetWide(Core.R_Z) + q)));
+			switch (arguments[0])
+			{
+				case "Z":
+					return registerFile.WithRegister(d, memoryBus.Load((ushort)(registerFile.GetWide(Core.R_Z) + q)));
+				case "Y":
+					return registerFile.WithRegister(d, memoryBus.Load((ushort)(registerFile.GetWide(Core.R_Y) + q)));
+
+				default:
+					throw new ArgumentException(nameof(arguments));
+			}
 		}
 
-		[InstructionHandler("1001_000d_dddd_0001")]
-		public static RegisterFile Ld_Z_PostIncrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
+		[InstructionHandler("1001_000d_dddd_0001", "Z", "+")]
+		[InstructionHandler("1001_000d_dddd_0010", "Z", "-")]
+		[InstructionHandler("1000_000d_dddd_0000", "Z", "")]
+		[InstructionHandler("1001_000d_dddd_1001", "Y", "+")]
+		[InstructionHandler("1001_000d_dddd_1010", "Y", "-")]
+		[InstructionHandler("1000_000d_dddd_1000", "Y", "")]
+		[InstructionHandler("1001_000d_dddd_1101", "X", "+")]
+		[InstructionHandler("1001_000d_dddd_1110", "X", "-")]
+		[InstructionHandler("1001_000d_dddd_1100", "X", "")]
+		public static RegisterFile Ld(RegisterFile registerFile, byte d, MemoryBus memoryBus, string[] arguments)
 		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Z)))
-				.WithWide(Core.R_Z, (ushort)(registerFile.GetWide(Core.R_Z) + 1));
+			var preDecrement = arguments[1] == "-";
+			var postIncrement = arguments[1] == "+";
+			var register = (byte) (arguments[0] == "Z" ? Core.R_Z : (arguments[0] == "Y" ? Core.R_Y : (arguments[0] == "X" ? Core.R_X : 0)));
+			if (register == 0)
+			{
+				throw new ArgumentException(nameof(arguments));
+			}
+
+			if (preDecrement)
+			{
+				registerFile = registerFile.WithWide(register, v => (ushort) (v - 1));
+			}
+
+			registerFile = registerFile.WithRegister(d, memoryBus.Load(registerFile.GetWide(register)));
+
+			if (postIncrement)
+			{
+				registerFile = registerFile.WithWide(register, v => (ushort)(v + 1));
+			}
+
+			return registerFile;
 		}
 
-		[InstructionHandler("1001_000d_dddd_0010")]
-		public static RegisterFile Ld_Z_PreDecrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Z - 1)))
-				.WithWide(Core.R_Z, (ushort)(registerFile.GetWide(Core.R_Z) - 1));
-		}
-
-		[InstructionHandler("1000_000d_dddd_0000")]
-		public static RegisterFile Ld_Z(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Z)));
-		}
-
-		[InstructionHandler("10q0_qq0d_dddd_1qqq")]
-		public static RegisterFile Ldd_Y(RegisterFile registerFile, byte d, byte q, MemoryBus memoryBus)
-		{
-			return registerFile.WithRegister(d, memoryBus.Load((ushort)(registerFile.GetWide(Core.R_Y) + q)));
-		}
-
-		[InstructionHandler("1001_000d_dddd_1001")]
-		public static RegisterFile Ld_Y_PostIncrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Y)))
-				.WithWide(Core.R_Y, (ushort)(registerFile.GetWide(Core.R_Y) + 1));
-		}
-
-		[InstructionHandler("1001_000d_dddd_1010")]
-		public static RegisterFile Ld_Y_PreDecrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Y - 1)))
-				.WithWide(Core.R_Y, (ushort)(registerFile.GetWide(Core.R_Y) - 1));
-		}
-
-		[InstructionHandler("1000_000d_dddd_1000")]
-		public static RegisterFile Ld_Y(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_Y)));
-		}
-
-		[InstructionHandler("1001_000d_dddd_1101")]
-		public static RegisterFile Ld_X_PostIncrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_X)))
-				.WithWide(Core.R_X, (ushort)(registerFile.GetWide(Core.R_X) + 1));
-		}
-
-		[InstructionHandler("1001_000d_dddd_1110")]
-		public static RegisterFile Ld_X_PreDecrement(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_X - 1)))
-				.WithWide(Core.R_X, (ushort)(registerFile.GetWide(Core.R_X) - 1));
-		}
-
-		[InstructionHandler("1001_000d_dddd_1100")]
-		public static RegisterFile Ld_X(RegisterFile registerFile, byte d, MemoryBus memoryBus)
-		{
-			return registerFile
-				.WithRegister(d, memoryBus.Load(registerFile.GetWide(Core.R_X)));
-		}
-
-		[InstructionHandler("10q0_qq1r_rrrr_0qqq")]
-		public static RegisterFile Std_Z(RegisterFile registerFile, byte r, byte q, MemoryBus memoryBus)
+		[InstructionHandler("10q0_qq1r_rrrr_0qqq", "Z")]
+		[InstructionHandler("10q0_qq1r_rrrr_1qqq", "Y")]
+		public static RegisterFile Std_Z(RegisterFile registerFile, byte r, byte q, MemoryBus memoryBus, string[] arguments)
 		{
 			memoryBus.Store((ushort)(registerFile.GetWide(Core.R_Z) + q), registerFile[r]);
 
+			switch (arguments[0])
+			{
+				case "Z":
+					memoryBus.Store((ushort)(registerFile.GetWide(Core.R_Z) + q), registerFile[r]);
+					break;
+				case "Y":
+					memoryBus.Store((ushort)(registerFile.GetWide(Core.R_Y) + q), registerFile[r]);
+					break;
+				default:
+					throw new ArgumentException(nameof(arguments));
+			}
+
 			return registerFile;
 		}
 
-		[InstructionHandler("10q0_qq1r_rrrr_1qqq")]
-		public static RegisterFile Std_Y(RegisterFile registerFile, byte r, byte q, MemoryBus memoryBus)
+		[InstructionHandler("1001_001r_rrrr_0001", "Z", "+")]
+		[InstructionHandler("1001_001r_rrrr_0010", "Z", "-")]
+		[InstructionHandler("1000_001r_rrrr_0000", "Z", "")]
+		[InstructionHandler("1001_001r_rrrr_1001", "Y", "+")]
+		[InstructionHandler("1001_001r_rrrr_1010", "Y", "-")]
+		[InstructionHandler("1000_001r_rrrr_1000", "Y", "")]
+		[InstructionHandler("1001_001r_rrrr_1101", "X", "+")]
+		[InstructionHandler("1001_001r_rrrr_1110", "X", "-")]
+		[InstructionHandler("1001_001r_rrrr_1100", "X", "")]
+		public static RegisterFile St(RegisterFile registerFile, byte r, MemoryBus memoryBus, string[] arguments)
 		{
-			memoryBus.Store((ushort)(registerFile.GetWide(Core.R_Y) + q), registerFile[r]);
 
-			return registerFile;
-		}
+			var preDecrement = arguments[1] == "-";
+			var postIncrement = arguments[1] == "+";
+			var register = (byte)(arguments[0] == "Z" ? Core.R_Z : (arguments[0] == "Y" ? Core.R_Y : (arguments[0] == "X" ? Core.R_X : 0)));
+			if (register == 0)
+			{
+				throw new ArgumentException(nameof(arguments));
+			}
 
-		[InstructionHandler("1001_001r_rrrr_0001")]
-		public static RegisterFile St_Z_PostIncrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_Z, r, memoryBus).WithWide(Core.R_Z, x => (ushort)(x + 1));
-		}
+			if (preDecrement)
+			{
+				registerFile = registerFile.WithWide(register, v => (ushort)(v - 1));
+			}
 
-		[InstructionHandler("1001_001r_rrrr_0010")]
-		public static RegisterFile St_Z_PreDecrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			registerFile = registerFile.WithWide(Core.R_Z, x => (ushort)(x - 1));
+			memoryBus.Store(registerFile.GetWide(register), r);
 
-			return St(registerFile, Core.R_Z, r, memoryBus);
-		}
-
-		[InstructionHandler("1000_001r_rrrr_0000")]
-		public static RegisterFile St_Z(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_Z, r, memoryBus);
-		}
-
-		[InstructionHandler("1001_001r_rrrr_1001")]
-		public static RegisterFile St_Y_PostIncrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_Y, r, memoryBus).WithWide(Core.R_Y, x => (ushort)(x + 1));
-		}
-
-		[InstructionHandler("1001_001r_rrrr_1010")]
-		public static RegisterFile St_Y_PreDecrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			registerFile = registerFile.WithWide(Core.R_Y, x => (ushort)(x - 1));
-
-			return St(registerFile, Core.R_Y, r, memoryBus);
-		}
-
-		[InstructionHandler("1000_001r_rrrr_1000")]
-		public static RegisterFile St_Y(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_Y, r, memoryBus);
-		}
-
-		[InstructionHandler("1001_001r_rrrr_1101")]
-		public static RegisterFile St_X_PostIncrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_X, r, memoryBus).WithWide(Core.R_X, x => (ushort)(x + 1));
-		}
-
-		[InstructionHandler("1001_001r_rrrr_1110")]
-		public static RegisterFile St_X_PreDecrement(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			registerFile = registerFile.WithWide(Core.R_X, x => (ushort) (x - 1));
-
-			return St(registerFile, Core.R_X, r, memoryBus);
-		}
-
-		[InstructionHandler("1001_001r_rrrr_1100")]
-		public static RegisterFile St_X(RegisterFile registerFile, byte r, MemoryBus memoryBus)
-		{
-			return St(registerFile, Core.R_X, r, memoryBus);
-		}
-
-		static RegisterFile St(RegisterFile registerFile, byte register, byte r, MemoryBus memoryBus)
-		{
-			memoryBus.Store(registerFile.GetWide(register), registerFile[r]);
+			if (postIncrement)
+			{
+				registerFile = registerFile.WithWide(register, v => (ushort)(v + 1));
+			}
 
 			return registerFile;
 		}

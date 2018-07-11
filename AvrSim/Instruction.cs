@@ -6,9 +6,10 @@ namespace AvrSim
 	{
 		public ushort Address { get; set; }
 		public string Opcode { get; set; }
-		public Dictionary<char, uint> Values { get; set; }
+		public byte[] Bytes { get; set; }
+		public Dictionary<char, InstructionValue> Values { get; set; }
 
-		public uint this[char value]
+		public InstructionValue this[char value]
 		{
 			get
 			{

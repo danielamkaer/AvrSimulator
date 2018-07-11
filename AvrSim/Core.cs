@@ -58,7 +58,7 @@ namespace AvrSim
 				}
 
 				instruction.Address = (ushort)currentProgramCounter;
-				Console.Error.WriteLine($"{instruction.Address * 2:X4}:    {"",-12}    {instruction.Opcode,-5}   ");
+				Console.Error.WriteLine($"{instruction.Address * 2:X4}:    {BitConverter.ToString(instruction.Bytes).Replace('-',' '),-12}    {instruction.Opcode,-5}   ");
 				ExecuteInstruction(instruction);
 				Console.Error.WriteLine($"   {RegisterFile}");
 
@@ -82,21 +82,22 @@ namespace AvrSim
 
 		public class Handler
 		{
+			public string Name { get; set; }
 			public MethodInfo MethodInfo { get; set; }
 		}
 
 		Core()
 		{
-			var methods = from m in Assembly.GetExecutingAssembly().GetTypes().SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public))
-			//var methods = from m in GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-						  let attr = m.GetCustomAttributes(typeof(InstructionHandlerAttribute), false)
-						  where attr.Length == 1
-						  select new { MethodInfo = m, InstructionHandlerAttribute = (InstructionHandlerAttribute)attr.First() };
+			var methods = Assembly.GetExecutingAssembly().GetTypes()
+							  .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public))
+			                  .SelectMany(m => m.GetCustomAttributes(typeof(InstructionHandlerAttribute), false), (m,a) => new {MethodInfo = m, InstructionHandlerAttribute = (InstructionHandlerAttribute)a});
 
 			List<Handler> Instructions = new List<Handler>();
 
 			foreach (var method in methods)
 			{
+				var name = method.MethodInfo.Name + (method.InstructionHandlerAttribute.Arguments.Length == 0 ? string.Empty : ("_" + string.Join("-", method.InstructionHandlerAttribute.Arguments)));
+
 				if (method.MethodInfo.ReturnType != typeof(RegisterFile))
 				{
 					throw new Exception($"Method should return a {typeof(RegisterFile)}");
@@ -104,22 +105,24 @@ namespace AvrSim
 
 				Instructions.Add(new Handler
 				{
+					Name = name,
 					MethodInfo = method.MethodInfo
 				});
-				OpcodeDecoder.AddDecoder(method.MethodInfo.Name, method.InstructionHandlerAttribute.Pattern);
-				InstructionHandlers.Add(method.MethodInfo.Name, (instruction, registerFile) =>
+				OpcodeDecoder.AddDecoder(name, method.InstructionHandlerAttribute.Pattern);
+				InstructionHandlers.Add(name, (instruction, registerFile) =>
 				{
-					var handler = Instructions.Single(h => h.MethodInfo.Name == method.MethodInfo.Name);
+					//var handler = Instructions.Single(h => );
+					var methodInfo = method.MethodInfo;
 
-					var parameters = handler.MethodInfo.GetParameters().Select(p => MapParameter(p, instruction, registerFile)).ToArray();
+					var parameters = methodInfo.GetParameters().Select(p => MapParameter(p, instruction, registerFile, method.InstructionHandlerAttribute.Arguments)).ToArray();
 
 					try
 					{
-						if (handler.MethodInfo.IsStatic) 
+						if (methodInfo.IsStatic) 
 						{
-							return (RegisterFile)handler.MethodInfo.Invoke(null, parameters);
+							return (RegisterFile)methodInfo.Invoke(null, parameters);
 						} else {
-							return (RegisterFile)handler.MethodInfo.Invoke(this, parameters);
+							return (RegisterFile)methodInfo.Invoke(this, parameters);
 						}
 					}
 					catch (TargetInvocationException exception)
@@ -132,7 +135,7 @@ namespace AvrSim
 			}
 		}
 
-		object MapParameter(ParameterInfo parameterInfo, Instruction instruction, RegisterFile registerFile)
+		object MapParameter(ParameterInfo parameterInfo, Instruction instruction, RegisterFile registerFile, string[] arguments)
 		{
 			if (parameterInfo.ParameterType == typeof(Instruction))
 			{
@@ -159,6 +162,11 @@ namespace AvrSim
 				return Stack;
 			}
 
+			if (parameterInfo.ParameterType == typeof(string[]))
+			{
+				return arguments;
+			}
+
 			if (parameterInfo.Name.Length == 1)
 			{
 				char name = parameterInfo.Name[0];
@@ -181,6 +189,21 @@ namespace AvrSim
 				if (parameterInfo.ParameterType == typeof(byte))
 				{
 					return (byte)instruction[name];
+				}
+
+				if (parameterInfo.ParameterType == typeof(short))
+				{
+					return (short)instruction[name];
+				}
+
+				if (parameterInfo.ParameterType == typeof(int))
+				{
+					return (int)instruction[name];
+				}
+
+				if (parameterInfo.ParameterType == typeof(sbyte))
+				{
+					return (sbyte)instruction[name];
 				}
 			}
 

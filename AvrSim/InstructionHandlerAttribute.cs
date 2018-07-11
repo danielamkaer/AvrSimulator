@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace AvrSim
 {
-	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 	public class InstructionHandlerAttribute : Attribute
 	{
-		public InstructionHandlerAttribute(string pattern)
+		public string[] Arguments { get; }
+
+		public InstructionHandlerAttribute(string pattern, params string[] arguments)
 		{
+			Arguments = arguments;
 			Pattern = pattern;
 		}
 
